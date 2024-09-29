@@ -179,7 +179,7 @@ impl CodeBuffer {
     /// # Examples
     ///
     /// ```
-    /// # use oxc_codegen::CodeBuffer;
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// // Safe: 'a' is a valid ASCII character. Its UTF-8 representation only
     /// // requires a single byte.
