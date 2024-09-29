@@ -257,7 +257,7 @@ impl CodeBuffer {
     /// # Examples
     ///
     /// ```
-    /// # use oxc_codegen::CodeBuffer;
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// code.print_ascii(['f', 'o', 'o'].iter().copied());
