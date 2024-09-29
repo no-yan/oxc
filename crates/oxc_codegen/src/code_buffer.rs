@@ -139,7 +139,7 @@ impl CodeBuffer {
     /// # Examples
     ///
     /// ```
-    /// # use oxc_codegen::CodeBuffer;
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_ascii_char('f');
     /// code.print_ascii_char('o');
