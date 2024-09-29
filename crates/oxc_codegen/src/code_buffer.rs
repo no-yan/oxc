@@ -290,7 +290,7 @@ impl CodeBuffer {
     /// # Examples
     ///
     /// ```
-    /// # use oxc_codegen::CodeBuffer;
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// // Indent to a dynamic level. Sound because all elements in this
