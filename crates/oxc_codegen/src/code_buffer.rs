@@ -38,7 +38,7 @@ impl CodeBuffer {
     /// ## Examples
     ///
     /// ```
-    /// # use oxc_codegen::CodeBuffer;
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// // use `code` to build new source text
