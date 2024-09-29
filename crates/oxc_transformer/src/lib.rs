@@ -26,6 +26,7 @@ mod typescript;
 
 mod helpers {
     pub mod bindings;
+    pub mod loader;
     pub mod module_imports;
     pub mod stack;
 }
@@ -94,7 +95,7 @@ impl<'a> Transformer<'a> {
             x2_es2021: ES2021::new(self.options.es2021),
             x2_es2020: ES2020::new(self.options.es2020),
             x2_es2019: ES2019::new(self.options.es2019),
-            x2_es2018: ES2018::new(self.options.es2018),
+            x2_es2018: ES2018::new(self.options.es2018, &self.ctx),
             x2_es2016: ES2016::new(self.options.es2016),
             x3_es2015: ES2015::new(self.options.es2015),
             x4_regexp: RegExp::new(self.options.regexp, &self.ctx),
@@ -112,7 +113,7 @@ struct TransformerImpl<'a, 'ctx> {
     x2_es2021: ES2021<'a>,
     x2_es2020: ES2020<'a>,
     x2_es2019: ES2019,
-    x2_es2018: ES2018,
+    x2_es2018: ES2018<'a, 'ctx>,
     x2_es2016: ES2016<'a>,
     x3_es2015: ES2015<'a>,
     x4_regexp: RegExp<'a, 'ctx>,

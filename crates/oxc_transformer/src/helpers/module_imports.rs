@@ -8,13 +8,13 @@ use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::TraverseCtx;
 
-pub struct NamedImport<'a> {
+pub struct ImportSpecifier<'a> {
     imported: Atom<'a>,
     local: Option<Atom<'a>>, // Not used in `require`
     symbol_id: SymbolId,
 }
 
-impl<'a> NamedImport<'a> {
+impl<'a> ImportSpecifier<'a> {
     pub fn new(imported: Atom<'a>, local: Option<Atom<'a>>, symbol_id: SymbolId) -> Self {
         Self { imported, local, symbol_id }
     }
@@ -23,13 +23,24 @@ impl<'a> NamedImport<'a> {
 #[derive(Hash, Eq, PartialEq)]
 pub enum ImportKind {
     Import,
+    ImportDefault,
     Require,
 }
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq)]
 pub struct ImportType<'a> {
     kind: ImportKind,
     source: Atom<'a>,
+}
+
+impl PartialEq for ImportType<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.kind == ImportKind::ImportDefault {
+            false
+        } else {
+            self.kind == other.kind && self.source == other.source
+        }
+    }
 }
 
 impl<'a> ImportType<'a> {
@@ -43,7 +54,7 @@ impl<'a> ImportType<'a> {
 pub struct ModuleImports<'a> {
     ast: AstBuilder<'a>,
 
-    imports: RefCell<IndexMap<ImportType<'a>, std::vec::Vec<NamedImport<'a>>>>,
+    imports: RefCell<IndexMap<ImportType<'a>, std::vec::Vec<ImportSpecifier<'a>>>>,
 }
 
 impl<'a> ModuleImports<'a> {
@@ -52,8 +63,15 @@ impl<'a> ModuleImports<'a> {
         Self { ast, imports: RefCell::new(IndexMap::default()) }
     }
 
+    pub fn add_default(&self, source: Atom<'a>, import: ImportSpecifier<'a>) {
+        self.imports
+            .borrow_mut()
+            .entry(ImportType::new(ImportKind::ImportDefault, source))
+            .or_insert(vec![import]);
+    }
+
     /// Add `import { named_import } from 'source'`
-    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>) {
+    pub fn add_import(&self, source: Atom<'a>, import: ImportSpecifier<'a>) {
         self.imports
             .borrow_mut()
             .entry(ImportType::new(ImportKind::Import, source))
@@ -62,7 +80,7 @@ impl<'a> ModuleImports<'a> {
     }
 
     /// Add `var named_import from 'source'`
-    pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
+    pub fn add_require(&self, source: Atom<'a>, import: ImportSpecifier<'a>, front: bool) {
         let len = self.imports.borrow().len();
         self.imports
             .borrow_mut()
@@ -79,6 +97,7 @@ impl<'a> ModuleImports<'a> {
             match import_type.kind {
                 ImportKind::Import => self.get_named_import(import_type.source, names),
                 ImportKind::Require => self.get_require(import_type.source, names, ctx),
+                ImportKind::ImportDefault => self.get_default_import(import_type.source, names),
             }
         }))
     }
@@ -86,7 +105,7 @@ impl<'a> ModuleImports<'a> {
     fn get_named_import(
         &self,
         source: Atom<'a>,
-        names: std::vec::Vec<NamedImport<'a>>,
+        names: std::vec::Vec<ImportSpecifier<'a>>,
     ) -> Statement<'a> {
         let specifiers = self.ast.vec_from_iter(names.into_iter().map(|name| {
             let local = name.local.unwrap_or_else(|| name.imported.clone());
@@ -107,10 +126,33 @@ impl<'a> ModuleImports<'a> {
         self.ast.statement_module_declaration(import_stmt)
     }
 
+    fn get_default_import(
+        &self,
+        source: Atom<'a>,
+        names: std::vec::Vec<ImportSpecifier<'a>>,
+    ) -> Statement<'a> {
+        let specifiers = self.ast.vec_from_iter(names.into_iter().map(|name| {
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(
+                self.ast.alloc_import_default_specifier(
+                    SPAN,
+                    BindingIdentifier::new_with_symbol_id(SPAN, name.imported, name.symbol_id),
+                ),
+            )
+        }));
+        let import_stmt = self.ast.module_declaration_import_declaration(
+            SPAN,
+            Some(specifiers),
+            StringLiteral::new(SPAN, source),
+            NONE,
+            ImportOrExportKind::Value,
+        );
+        self.ast.statement_module_declaration(import_stmt)
+    }
+
     fn get_require(
         &self,
         source: Atom<'a>,
-        names: std::vec::Vec<NamedImport<'a>>,
+        names: std::vec::Vec<ImportSpecifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;

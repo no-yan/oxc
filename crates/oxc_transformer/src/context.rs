@@ -2,6 +2,7 @@ use std::{
     cell::RefCell,
     mem,
     path::{Path, PathBuf},
+    rc::Rc,
 };
 
 use oxc_allocator::Allocator;
@@ -9,7 +10,10 @@ use oxc_ast::{AstBuilder, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
-use crate::{helpers::module_imports::ModuleImports, TransformOptions};
+use crate::{
+    helpers::{loader::HelperLoader, module_imports::ModuleImports},
+    TransformOptions,
+};
 
 pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
@@ -30,7 +34,8 @@ pub struct TransformCtx<'a> {
 
     // Helpers
     /// Manage import statement globally
-    pub module_imports: ModuleImports<'a>,
+    pub module_imports: Rc<RefCell<ModuleImports<'a>>>,
+    pub helpers: Rc<RefCell<HelperLoader<'a>>>,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -50,6 +55,12 @@ impl<'a> TransformCtx<'a> {
             .strip_prefix(&options.cwd)
             .map_or_else(|_| source_path.to_path_buf(), |p| Path::new("<CWD>").join(p));
 
+        let module_imports = Rc::new(RefCell::new(ModuleImports::new(allocator)));
+        let helpers = Rc::new(RefCell::new(HelperLoader::new(
+            &options.helper_loader,
+            allocator,
+            &module_imports,
+        )));
         Self {
             errors: RefCell::new(vec![]),
             ast: AstBuilder::new(allocator),
@@ -58,7 +69,8 @@ impl<'a> TransformCtx<'a> {
             source_type,
             source_text,
             trivias,
-            module_imports: ModuleImports::new(allocator),
+            helpers,
+            module_imports,
         }
     }
 

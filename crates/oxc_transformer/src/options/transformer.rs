@@ -12,6 +12,7 @@ use crate::{
     es2019::ES2019Options,
     es2020::ES2020Options,
     es2021::ES2021Options,
+    helpers::loader::options::{HelperLoaderMode, HelperLoaderOptions},
     options::babel::BabelOptions,
     react::ReactOptions,
     regexp::RegExpOptions,
@@ -53,6 +54,8 @@ pub struct TransformOptions {
     pub es2020: ES2020Options,
 
     pub es2021: ES2021Options,
+
+    pub helper_loader: HelperLoaderOptions,
 }
 
 impl TransformOptions {
@@ -86,6 +89,10 @@ impl TransformOptions {
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
+            helper_loader: HelperLoaderOptions {
+                mode: HelperLoaderMode::Runtime,
+                ..Default::default()
+            },
         }
     }
 
@@ -287,6 +294,10 @@ impl TransformOptions {
                 }
             }
         };
+
+        if options.external_helpers {
+            transformer_options.helper_loader.mode = HelperLoaderMode::External;
+        }
 
         transformer_options.cwd = options.cwd.clone().unwrap_or_default();
 

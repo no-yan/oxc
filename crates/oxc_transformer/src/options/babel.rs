@@ -28,6 +28,8 @@ pub struct BabelOptions {
     pub allow_await_outside_function: bool,
     #[serde(default)]
     pub allow_undeclared_exports: bool,
+    #[serde(default = "default_as_true")]
+    pub external_helpers: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -43,6 +45,29 @@ impl TestOs {
     pub fn is_windows(&self) -> bool {
         matches!(self, Self::Win32 | Self::Windows)
     }
+}
+
+// impl Default for BabelOptions {
+//     fn default() -> Self {
+//         Self {
+//             external_helpers: default_as_true(),
+//             cwd: None,
+//             source_type: None,
+//             plugins: Vec::default(),
+//             presets: Vec::default(),
+//             assumptions: Value::default(),
+//             throws: None,
+//             babel_8_breaking: Option::default(),
+//             os: None,
+//             allow_return_outside_function: false,
+//             allow_await_outside_function: false,
+//             allow_undeclared_exports: false,
+//         }
+//     }
+// }
+
+fn default_as_true() -> bool {
+    true
 }
 
 impl BabelOptions {

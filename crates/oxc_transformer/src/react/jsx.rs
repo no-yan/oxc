@@ -106,7 +106,7 @@ pub use super::{
     options::{ReactJsxRuntime, ReactOptions},
 };
 use crate::{
-    helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
+    helpers::{bindings::BoundIdentifier, module_imports::ImportSpecifier},
     TransformCtx,
 };
 
@@ -198,8 +198,8 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
             ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
         let variable_name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
-        let import = NamedImport::new(variable_name.clone(), None, symbol_id);
-        self.ctx.module_imports.add_require(source, import, front);
+        let import = ImportSpecifier::new(variable_name.clone(), None, symbol_id);
+        self.ctx.module_imports.borrow_mut().add_require(source, import, front);
         BoundIdentifier { name: variable_name, symbol_id }
     }
 }
@@ -299,8 +299,8 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
         let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
         let local = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
-        let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
-        self.ctx.module_imports.add_import(source, import);
+        let import = ImportSpecifier::new(Atom::from(name), Some(local.clone()), symbol_id);
+        self.ctx.module_imports.borrow_mut().add_import(source, import);
         BoundIdentifier { name: local, symbol_id }
     }
 }
@@ -476,7 +476,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
             return;
         }
 
-        let imports = self.ctx.module_imports.get_import_statements(ctx);
+        let imports = self.ctx.module_imports.borrow_mut().get_import_statements(ctx);
         let mut index = program
             .body
             .iter()
