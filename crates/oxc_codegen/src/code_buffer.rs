@@ -127,8 +127,7 @@ impl CodeBuffer {
     #[inline]
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
     pub fn peek_nth(&self, n: usize) -> Option<char> {
-        // SAFETY: `buf` is a valid UTF-8 string because of invariants upheld by
-        // CodeBuffer
+        // SAFETY: `buf` is a valid UTF-8 string because of invariants upheld by CodeBuffer
         unsafe { std::str::from_utf8_unchecked(&self.buf) }.chars().nth_back(n)
     }
 
