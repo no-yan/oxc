@@ -149,12 +149,12 @@ impl CodeBuffer {
     /// assert_eq!(source, "foo");
     /// ```
     #[inline]
-    pub fn print_ascii_char(&mut self, ch: u8) {
+    pub fn print_ascii_byte(&mut self, b: u8) {
         // NOTE: since this method is inlined, this assertion should get
-        // optimized away by the compiler when the value of `ch` is known, e.g.
-        // when printing a constant.
-        assert!(ch.is_ascii(), "character {ch} is not ASCII");
-        self.buf.push(ch);
+        // optimized away by the compiler when the value of `b` is known,
+        // e.g. when printing a constant.
+        assert!(b.is_ascii(), "byte {b} is not ASCII");
+        self.buf.push(b);
     }
 
     /// Print a byte without checking that this buffer still represents a valid
