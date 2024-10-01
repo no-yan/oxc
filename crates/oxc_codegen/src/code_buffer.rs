@@ -259,7 +259,7 @@ impl CodeBuffer {
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
-    /// code.print_ascii(['f', 'o', 'o'].iter().copied());
+    /// code.print_ascii([b'f', b'o', b'o'].into_iter());
     /// assert_eq!(String::from(code), "foo");
     /// ```
     pub fn print_ascii<I>(&mut self, chars: I)
