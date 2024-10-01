@@ -353,8 +353,14 @@ impl AsRef<[u8]> for CodeBuffer {
     }
 }
 impl From<CodeBuffer> for String {
-    fn from(mut printer: CodeBuffer) -> Self {
-        printer.take_source_text()
+    #[inline]
+    fn from(printer: CodeBuffer) -> Self {
+        if cfg!(debug_assertions) {
+            String::from_utf8(printer.buf).unwrap()
+        } else {
+            // SAFETY: `buf` is valid UTF-8 because of invariants upheld by `CodeBuffer`
+            unsafe { String::from_utf8_unchecked(printer.buf) }
+        }
     }
 }
 
