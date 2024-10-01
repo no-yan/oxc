@@ -1601,6 +1601,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "rustc-hash",
 ]
 
@@ -1711,6 +1712,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "oxc_traverse",
  "pico-args",
 ]
@@ -1752,6 +1754,7 @@ dependencies = [
  "oxc_ast",
  "oxc_parser",
  "oxc_span",
+ "oxc_syntax_operations",
 ]
 
 [[package]]
@@ -1770,6 +1773,7 @@ dependencies = [
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "pico-args",
  "rustc-hash",
  "seq-macro",
@@ -1883,6 +1887,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "phf 0.11.2",
  "rustc-hash",
  "serde",
@@ -1937,6 +1942,14 @@ dependencies = [
  "tsify",
  "unicode-id-start",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "oxc_syntax_operations"
+version = "0.30.5"
+dependencies = [
+ "oxc_ast",
+ "oxc_span",
 ]
 
 [[package]]
@@ -2000,6 +2013,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "oxc_traverse",
  "pico-args",
  "ropey",
@@ -2021,6 +2035,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "rustc-hash",
 ]
 

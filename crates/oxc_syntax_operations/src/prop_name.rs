@@ -1,6 +1,5 @@
+use oxc_ast::ast::*;
 use oxc_span::Span;
-
-use crate::ast::*;
 
 /// [`PropName`](https://tc39.es/ecma262/#sec-static-semantics-propname)
 pub trait PropName {

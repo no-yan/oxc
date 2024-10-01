@@ -1,4 +1,4 @@
-use crate::ast::*;
+use oxc_ast::ast::*;
 
 /// [`PrivateBoundIdentifiers`](https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers)
 pub trait PrivateBoundIdentifiers {

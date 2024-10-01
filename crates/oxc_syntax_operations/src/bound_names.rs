@@ -1,4 +1,4 @@
-use crate::ast::*;
+use oxc_ast::ast::*;
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
 pub trait BoundName<'a> {

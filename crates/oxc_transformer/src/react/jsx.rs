@@ -97,6 +97,7 @@ use oxc_syntax::{
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
+use oxc_syntax_operations::HasProto;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use super::diagnostics;
