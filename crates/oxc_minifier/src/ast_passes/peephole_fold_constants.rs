@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::ops::Neg;
 
 use num_bigint::BigInt;
+use num_traits::Zero;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
@@ -65,6 +66,19 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
 impl<'a> PeepholeFoldConstants {
     pub fn new() -> Self {
         Self { changed: false }
+    }
+
+    fn try_get_number_literal_value(&self, expr: &mut Expression<'a>) -> Option<f64> {
+        match expr {
+            Expression::NumericLiteral(n) => Some(n.value),
+            Expression::UnaryExpression(unary)
+                if unary.operator == UnaryOperator::UnaryNegation =>
+            {
+                let Expression::NumericLiteral(arg) = &mut unary.argument else { return None };
+                Some(-arg.value)
+            }
+            _ => None,
+        }
     }
 
     fn try_fold_useless_object_dot_define_properties_call(
@@ -409,13 +423,9 @@ impl<'a> PeepholeFoldConstants {
             BinaryOperator::Subtraction
             | BinaryOperator::Division
             | BinaryOperator::Remainder
-            | BinaryOperator::Exponential => {
-                self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
-            }
-            BinaryOperator::Multiplication
-            | BinaryOperator::BitwiseAnd
-            | BinaryOperator::BitwiseOR
-            | BinaryOperator::BitwiseXOR => {
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Exponential => self.try_fold_arithmetic_op(e, ctx),
+            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 // TODO:
                 // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
                 // if (result != subtree) {
@@ -475,14 +485,57 @@ impl<'a> PeepholeFoldConstants {
         }
     }
 
-    fn try_fold_arithmetic_op<'b>(
+    fn try_fold_arithmetic_op(
         &self,
-        _span: Span,
-        _left: &'b Expression<'a>,
-        _right: &'b Expression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        operation: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        None
+        if !operation.operator.is_arithmetic() {
+            return None;
+        };
+        let left = self.try_get_number_literal_value(&mut operation.left)?;
+        let right = self.try_get_number_literal_value(&mut operation.right)?;
+        if !left.is_finite() || !right.is_finite() {
+            return None;
+        }
+        let result = match operation.operator {
+            BinaryOperator::Addition => left + right,
+            BinaryOperator::Subtraction => left - right,
+            BinaryOperator::Multiplication => {
+                let result = left * right;
+                // Check which is shorter, the string representation of the result or the original
+                // expression. If the result is shorter, then use it.
+                // TODO find a better way to do this
+                let result_str = result.to_string().len();
+                let original_str = left.to_string().len() + right.to_string().len() + 1;
+                if result_str <= original_str {
+                    result
+                } else {
+                    return None;
+                }
+            }
+            BinaryOperator::Division if !right.is_zero() => {
+                let result = left / right;
+                let result_str = result.to_string().len();
+                let original_str = left.to_string().len() + right.to_string().len() + 1;
+                if result_str <= original_str {
+                    result
+                } else {
+                    return None;
+                }
+            }
+            BinaryOperator::Remainder if !right.is_zero() && right.is_finite() => left % right,
+            // TODO BinaryOperator::Exponential if
+            _ => return None,
+        };
+        let number_base =
+            if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float };
+        Some(ctx.ast.expression_numeric_literal(
+            operation.span,
+            result,
+            result.to_string(),
+            number_base,
+        ))
     }
 
     fn try_fold_instanceof<'b>(
@@ -1574,7 +1627,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic() {
         test("x = 10 + 20", "x = 30");
         test("x = 2 / 4", "x = 0.5");
@@ -1586,10 +1638,10 @@ mod test {
         test("x = 3 % -2", "x = 1");
         test("x = -1 % 3", "x = -1");
         test_same("x = 1 % 0");
-        test("x = 2 ** 3", "x = 8");
-        test("x = 2 ** -3", "x = 0.125");
-        test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
-        test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+        // test("x = 2 ** 3", "x = 8");
+        // test("x = 2 ** -3", "x = 0.125");
+        // test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
+        // test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
     }
 
     #[test]
