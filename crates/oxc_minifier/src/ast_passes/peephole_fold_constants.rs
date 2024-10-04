@@ -516,6 +516,9 @@ impl<'a> PeepholeFoldConstants {
             }
             BinaryOperator::Division if !right.is_zero() => {
                 let result = left / right;
+                if result.is_nan() {
+                    return None;
+                };
                 let result_str = result.to_string().len();
                 let original_str = left.to_string().len() + right.to_string().len() + 1;
                 if result_str <= original_str {
@@ -525,7 +528,19 @@ impl<'a> PeepholeFoldConstants {
                 }
             }
             BinaryOperator::Remainder if !right.is_zero() && right.is_finite() => left % right,
-            // TODO BinaryOperator::Exponential if
+            BinaryOperator::Exponential => {
+                let result = left.powf(right);
+                if result.is_nan() {
+                    return None;
+                };
+                let result_str = result.to_string().len();
+                let original_str = left.to_string().len() + right.to_string().len() + 2;
+                if result_str <= original_str {
+                    result
+                } else {
+                    return None;
+                }
+            }
             _ => return None,
         };
         let number_base =
@@ -1638,10 +1653,14 @@ mod test {
         test("x = 3 % -2", "x = 1");
         test("x = -1 % 3", "x = -1");
         test_same("x = 1 % 0");
-        // test("x = 2 ** 3", "x = 8");
-        // test("x = 2 ** -3", "x = 0.125");
-        // test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
-        // test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+        test("x = 2 ** 3", "x = 8");
+        test("x = 2 ** -3", "x = 0.125");
+        test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
+        test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+
+        test_same("x = 0 / 0");
+        test_same("x = 0 % 0");
+        test_same("x = -1 ** 0.5");
     }
 
     #[test]
